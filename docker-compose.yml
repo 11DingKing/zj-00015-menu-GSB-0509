@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: zj-00015-postgres
+    ports:
+      - "15015:5432"
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123456
+      POSTGRES_DB: db_zj_00015
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d db_zj_00015"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: zj-00015-redis
+    ports:
+      - "14015:6379"
+    command: ["redis-server", "--requirepass", "redis123456"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: zj-00015-backend
+    ports:
+      - "13015:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://dev:dev123456@postgres:5432/db_zj_00015?schema=public
+      REDIS_URL: redis://:redis123456@redis:6379
+      JWT_SECRET: super-secret-jwt-key-change-in-production
+      PORT: 3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate dev --name init && npx ts-node prisma/seed.ts && npm run dev"
+
+  frontend:
+    build: ./frontend
+    container_name: zj-00015-frontend
+    ports:
+      - "16015:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:13015
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  redis_data:

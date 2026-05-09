@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id          String     @id @default(uuid())
+  username    String     @unique
+  password    String
+  nickname    String?
+  email       String?
+  phone       String?
+  avatar      String?
+  status      Int        @default(1)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  roles       Role[]     @relation("RoleToUser")
+  directPermissions Permission[] @relation("PermissionToUser")
+  departments Department[] @relation("UserToDepartment")
+  orders      Order[]    @relation("OrderToCreator")
+  auditLogs   AuditLog[]
+  @@map("sys_user")
+}
+
+// 角色表（支持父子继承）
+model Role {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  code        String     @unique
+  description String?
+  parentId    String?
+  parent      Role?      @relation("RoleToRole", fields: [parentId], references: [id])
+  children    Role[]     @relation("RoleToRole")
+  sort        Int        @default(0)
+  status      Int        @default(1)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  users       User[]     @relation("RoleToUser")
+  permissions Permission[] @relation("RoleToPermission")
+  @@map("sys_role")
+}
+
+// 权限表（菜单/按钮/数据/字段）
+enum PermissionType {
+  MENU
+  BUTTON
+  DATA
+  FIELD
+}
+
+// 数据权限范围
+enum DataScope {
+  ALL
+  DEPARTMENT
+  DEPARTMENT_AND_CHILDREN
+  SELF
+  CUSTOM
+}
+
+model Permission {
+  id          String         @id @default(uuid())
+  name        String
+  code        String         @unique
+  type        PermissionType
+  path        String?
+  icon        String?
+  component   String?
+  dataScope   DataScope?
+  dataRule    String?
+  fieldName   String?
+  fieldMask   String?
+  parentId    String?
+  sort        Int            @default(0)
+  status      Int            @default(1)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  roles       Role[]         @relation("RoleToPermission")
+  directUsers User[]         @relation("PermissionToUser")
+  @@map("sys_permission")
+}
+
+// 部门表（树形结构）
+model Department {
+  id          String     @id @default(uuid())
+  name        String
+  code        String     @unique
+  parentId    String?
+  parent      Department? @relation("DepartmentToDepartment", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentToDepartment")
+  sort        Int        @default(0)
+  status      Int        @default(1)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  users       User[]     @relation("UserToDepartment")
+  orders      Order[]    @relation("OrderToDepartment")
+  @@map("sys_department")
+}
+
+// 订单表（业务数据样例）
+model Order {
+  id            String     @id @default(uuid())
+  orderNo       String     @unique
+  customerName  String
+  customerPhone String
+  amount        Float
+  status        String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  creatorId     String
+  departmentId  String
+  creator       User       @relation("OrderToCreator", fields: [creatorId], references: [id])
+  department    Department @relation("OrderToDepartment", fields: [departmentId], references: [id])
+  @@map("biz_order")
+}
+
+// 审计日志表
+model AuditLog {
+  id          String     @id @default(uuid())
+  action      String
+  operatorId  String
+  operatorName String
+  targetType  String?
+  targetId    String?
+  details     String?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime   @default(now())
+  @@map("sys_audit_log")
+}
