@@ -1,13 +1,12 @@
 <template>
   <div>
     <div class="page-toolbar">
-      <button 
-        v-if="userStore.hasButtonPermission('system:dept')" 
-        class="btn btn-primary"
-      >新增部门</button>
+      <button v-permission="'system:dept'" class="btn btn-primary">
+        新增部门
+      </button>
     </div>
 
-    <div class="card" style="margin-top: 16px; padding: 0;">
+    <div class="card" style="margin-top: 16px; padding: 0">
       <table class="table">
         <thead>
           <tr>
@@ -28,12 +27,16 @@
             <td>{{ dept.users?.length || 0 }}</td>
             <td>{{ dept.sort }}</td>
             <td>
-              <span :class="dept.status === 1 ? 'tag tag-success' : 'tag tag-error'">
-                {{ dept.status === 1 ? '启用' : '禁用' }}
+              <span
+                :class="dept.status === 1 ? 'tag tag-success' : 'tag tag-error'"
+              >
+                {{ dept.status === 1 ? "启用" : "禁用" }}
               </span>
             </td>
             <td>
-              <button class="btn btn-default btn-sm" style="margin-right: 4px;">编辑</button>
+              <button class="btn btn-default btn-sm" style="margin-right: 4px">
+                编辑
+              </button>
               <button class="btn btn-danger btn-sm">删除</button>
             </td>
           </tr>
@@ -44,22 +47,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useUserStore } from '../stores/user';
-import http from '../utils/http';
-import type { Department } from '../types';
+import { ref, onMounted } from "vue";
+import http from "../utils/http";
+import type { Department } from "../types";
 
-const userStore = useUserStore();
 const departments = ref<Department[]>([]);
 
 function getDeptName(parentId: string | undefined) {
-  if (!parentId) return '-';
-  const dept = departments.value.find(d => d.id === parentId);
-  return dept ? dept.name : '-';
+  if (!parentId) return "-";
+  const dept = departments.value.find((d) => d.id === parentId);
+  return dept ? dept.name : "-";
 }
 
 async function loadData() {
-  const result = await http.get<any, any>('/api/departments');
+  const result = await http.get<any, any>("/api/departments");
   if (result.success) {
     departments.value = result.data;
   }
