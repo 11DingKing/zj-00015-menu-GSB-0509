@@ -8,13 +8,12 @@
         <option value="DATA">数据</option>
         <option value="FIELD">字段</option>
       </select>
-      <button 
-        v-if="userStore.hasButtonPermission('system:permission')" 
-        class="btn btn-primary"
-      >新增权限</button>
+      <button v-permission="'system:permission'" class="btn btn-primary">
+        新增权限
+      </button>
     </div>
 
-    <div class="card" style="margin-top: 16px; padding: 0;">
+    <div class="card" style="margin-top: 16px; padding: 0">
       <table class="table">
         <thead>
           <tr>
@@ -30,18 +29,22 @@
         <tbody>
           <tr v-for="perm in permissions" :key="perm.id">
             <td>{{ perm.name }}</td>
-            <td><code>{{ perm.code }}</code></td>
+            <td>
+              <code>{{ perm.code }}</code>
+            </td>
             <td>
               <span :class="getTypeTagClass(perm.type)">
                 {{ getTypeLabel(perm.type) }}
               </span>
             </td>
-            <td>{{ perm.path || perm.fieldName || '-' }}</td>
+            <td>{{ perm.path || perm.fieldName || "-" }}</td>
             <td>{{ getDataScopeLabel(perm.dataScope) }}</td>
             <td>{{ perm.sort }}</td>
             <td>
-              <span :class="perm.status === 1 ? 'tag tag-success' : 'tag tag-error'">
-                {{ perm.status === 1 ? '启用' : '禁用' }}
+              <span
+                :class="perm.status === 1 ? 'tag tag-success' : 'tag tag-error'"
+              >
+                {{ perm.status === 1 ? "启用" : "禁用" }}
               </span>
             </td>
           </tr>
@@ -52,48 +55,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useUserStore } from '../stores/user';
-import http from '../utils/http';
-import type { Permission } from '../types';
+import { ref, reactive, onMounted } from "vue";
+import { useUserStore } from "../stores/user";
+import http from "../utils/http";
+import type { Permission } from "../types";
 
 const userStore = useUserStore();
 const permissions = ref<Permission[]>([]);
-const searchForm = reactive({ type: '' });
+const searchForm = reactive({ type: "" });
 
 function getTypeLabel(type: string) {
   const map: Record<string, string> = {
-    MENU: '菜单',
-    BUTTON: '按钮',
-    DATA: '数据',
-    FIELD: '字段'
+    MENU: "菜单",
+    BUTTON: "按钮",
+    DATA: "数据",
+    FIELD: "字段",
   };
   return map[type] || type;
 }
 
 function getTypeTagClass(type: string) {
   const map: Record<string, string> = {
-    MENU: 'tag tag-info',
-    BUTTON: 'tag tag-warning',
-    DATA: 'tag tag-success',
-    FIELD: 'tag tag-error'
+    MENU: "tag tag-info",
+    BUTTON: "tag tag-warning",
+    DATA: "tag tag-success",
+    FIELD: "tag tag-error",
   };
-  return map[type] || 'tag';
+  return map[type] || "tag";
 }
 
 function getDataScopeLabel(scope: string | undefined) {
   const map: Record<string, string> = {
-    ALL: '全部数据',
-    DEPARTMENT: '本部门',
-    DEPARTMENT_AND_CHILDREN: '本部门及下级',
-    SELF: '仅本人',
-    CUSTOM: '自定义'
+    ALL: "全部数据",
+    DEPARTMENT: "本部门",
+    DEPARTMENT_AND_CHILDREN: "本部门及下级",
+    SELF: "仅本人",
+    CUSTOM: "自定义",
   };
-  return scope ? (map[scope] || scope) : '-';
+  return scope ? map[scope] || scope : "-";
 }
 
 async function loadData() {
-  const result = await http.get<any, any>('/api/permissions', { params: searchForm });
+  const result = await http.get<any, any>("/api/permissions", {
+    params: searchForm,
+  });
   if (result.success) {
     permissions.value = result.data;
   }
