@@ -1,23 +1,25 @@
 <template>
   <div>
     <div class="page-toolbar">
-      <input 
-        v-model="searchForm.name" 
-        type="text" 
-        class="input" 
+      <input
+        v-model="searchForm.name"
+        type="text"
+        class="input"
         placeholder="搜索角色名"
-        style="width: 200px;"
+        style="width: 200px"
         @keyup.enter="loadData"
       />
       <button class="btn btn-default" @click="loadData">搜索</button>
-      <button 
-        v-if="userStore.hasButtonPermission('system:role:add')" 
-        class="btn btn-primary" 
+      <button
+        v-permission="'system:role:add'"
+        class="btn btn-primary"
         @click="openCreateModal"
-      >新增角色</button>
+      >
+        新增角色
+      </button>
     </div>
 
-    <div class="card" style="margin-top: 16px; padding: 0;">
+    <div class="card" style="margin-top: 16px; padding: 0">
       <table class="table">
         <thead>
           <tr>
@@ -34,29 +36,37 @@
           <tr v-for="role in roles" :key="role.id">
             <td>{{ role.name }}</td>
             <td>{{ role.code }}</td>
-            <td>{{ role.description || '-' }}</td>
+            <td>{{ role.description || "-" }}</td>
             <td>{{ getRoleName(role.parentId) }}</td>
             <td>{{ role.sort }}</td>
             <td>
-              <span :class="role.status === 1 ? 'tag tag-success' : 'tag tag-error'">
-                {{ role.status === 1 ? '启用' : '禁用' }}
+              <span
+                :class="role.status === 1 ? 'tag tag-success' : 'tag tag-error'"
+              >
+                {{ role.status === 1 ? "启用" : "禁用" }}
               </span>
             </td>
             <td>
-              <button 
-                v-if="userStore.hasButtonPermission('system:role:edit')"
-                class="btn btn-default btn-sm" 
-                style="margin-right: 4px;"
-              >编辑</button>
-              <button 
-                v-if="userStore.hasButtonPermission('system:role:grantPerm')"
-                class="btn btn-default btn-sm" 
-                style="margin-right: 4px;"
-              >授权</button>
-              <button 
-                v-if="userStore.hasButtonPermission('system:role:delete')"
+              <button
+                v-permission="'system:role:edit'"
+                class="btn btn-default btn-sm"
+                style="margin-right: 4px"
+              >
+                编辑
+              </button>
+              <button
+                v-permission="'system:role:grantPerm'"
+                class="btn btn-default btn-sm"
+                style="margin-right: 4px"
+              >
+                授权
+              </button>
+              <button
+                v-permission="'system:role:delete'"
                 class="btn btn-danger btn-sm"
-              >删除</button>
+              >
+                删除
+              </button>
             </td>
           </tr>
         </tbody>
@@ -66,30 +76,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useUserStore } from '../stores/user';
-import http from '../utils/http';
-import type { Role } from '../types';
+import { ref, reactive, onMounted } from "vue";
+import { useUserStore } from "../stores/user";
+import http from "../utils/http";
+import type { Role } from "../types";
 
 const userStore = useUserStore();
 const roles = ref<Role[]>([]);
-const searchForm = reactive({ name: '' });
+const searchForm = reactive({ name: "" });
 
 function getRoleName(parentId: string | undefined) {
-  if (!parentId) return '-';
-  const role = roles.value.find(r => r.id === parentId);
-  return role ? role.name : '-';
+  if (!parentId) return "-";
+  const role = roles.value.find((r) => r.id === parentId);
+  return role ? role.name : "-";
 }
 
 async function loadData() {
-  const result = await http.get<any, any>('/api/roles', { params: searchForm });
+  const result = await http.get<any, any>("/api/roles", { params: searchForm });
   if (result.success) {
     roles.value = result.data;
   }
 }
 
 function openCreateModal() {
-  alert('新增角色功能');
+  alert("新增角色功能");
 }
 
 onMounted(() => loadData());
